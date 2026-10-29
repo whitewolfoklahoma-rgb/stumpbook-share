@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StumpBook — Stump Grinding Quote &amp; Job Book</title>
+<style>
+  :root{
+    --bark:#4a3220; --bark2:#6b4a2c; --leaf:#3e7c3a; --leaf2:#57a04e;
+    --paper:#faf6ef; --card:#ffffff; --line:#ddd2c0; --ink:#26221c;
+    --muted:#7a7263; --red:#b3352b; --amber:#b97a12; --green:#2e7d32;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--paper);color:var(--ink);font-size:15px;line-height:1.45;}
+  header{background:var(--bark);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.25);}
+  header .biz{font-size:13px;opacity:.85;letter-spacing:.4px;text-transform:uppercase;}
+  header h1{margin:2px 0 0;font-size:22px;font-weight:800;}
+  header h1 .accent{color:#a5d69e;}
+  nav{display:flex;gap:6px;padding:10px 12px 0;flex-wrap:wrap;max-width:980px;margin:0 auto;}
+  nav button{flex:1 1 auto;min-width:100px;padding:10px 8px;border:1px solid var(--line);background:#fff;border-radius:var(--radius) var(--radius) 0 0;border-bottom:none;font-size:14px;font-weight:600;cursor:pointer;color:var(--bark);}
+  nav button.active{background:var(--leaf);color:#fff;border-color:var(--leaf);}
+  main{max-width:980px;margin:0 auto;padding:14px 12px 60px;}
+  .view{display:none;}
+  .view.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px;}
+  .card h2{margin:0 0 10px;font-size:17px;color:var(--bark);}
+  .card h3{margin:14px 0 8px;font-size:15px;color:var(--bark);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;text-align:center;}
+  .stat .num{font-size:22px;font-weight:800;color:var(--bark);}
+  .stat .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+  label{display:block;font-size:13px;font-weight:600;color:var(--bark);margin:8px 0 3px;}
+  input[type=text],input[type=number],input[type=date],input[type=tel],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:15px;background:#fff;color:var(--ink);}
+  textarea{resize:vertical;min-height:52px;}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--leaf2);border-color:var(--leaf2);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row>div{flex:1 1 140px;}
+  .btn{display:inline-block;padding:10px 16px;border:none;border-radius:8px;background:var(--leaf);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin:4px 4px 4px 0;}
+  .btn:hover{background:var(--leaf2);}
+  .btn.secondary{background:#fff;color:var(--bark);border:1px solid var(--bark2);}
+  .btn.danger{background:#fff;color:var(--red);border:1px solid var(--red);}
+  .btn.small{padding:6px 10px;font-size:13px;min-height:40px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+  th{color:var(--bark);font-size:12px;text-transform:uppercase;letter-spacing:.4px;}
+  td.num,th.num{text-align:right;white-space:nowrap;}
+  .totals{width:100%;max-width:420px;margin-left:auto;}
+  .totals td{border-bottom:none;padding:3px 6px;}
+  .totals .grand{font-size:17px;font-weight:800;color:var(--bark);border-top:2px solid var(--bark);}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;}
+  .pill.quoted{background:#7a7263;} .pill.scheduled{background:var(--amber);}
+  .pill.done{background:var(--leaf);} .pill.paid{background:var(--green);} .pill.lost{background:var(--red);}
+  .muted{color:var(--muted);font-size:13px;}
+  .warn{background:#fdf3e0;border:1px solid var(--amber);border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0;}
+  .stump-row{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:10px;background:#fffdf8;}
+  .stump-row .row>div{flex:1 1 90px;}
+  .chk{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--bark);margin-top:22px;}
+  .chk input{width:18px;height:18px;}
+  .job-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;}
+  .job-head .who{font-weight:800;font-size:16px;color:var(--bark);}
+  details{margin-top:8px;}
+  summary{cursor:pointer;font-weight:600;color:var(--leaf);font-size:13px;}
+  .empty{text-align:center;color:var(--muted);padding:26px 10px;}
+  footer{max-width:980px;margin:0 auto;padding:0 12px 30px;color:var(--muted);font-size:12px;}
+  @media (max-width:560px){
+    header h1{font-size:19px;}
+    nav button{min-width:0;font-size:13px;padding:9px 4px;}
+    th,td{padding:6px 4px;font-size:13px;}
+    .totals{max-width:none;}
+  }
+  #printArea{display:none;}
+  @media print{
+    body>*{display:none !important;}
+    body>#printArea{display:block !important;font-size:13px;color:#000;background:#fff;padding:10px;}
+    #printArea h1{font-size:20px;margin:0 0 2px;}
+    #printArea table{width:100%;border-collapse:collapse;}
+    #printArea th,#printArea td{border-bottom:1px solid #999;padding:5px 4px;text-align:left;}
+    #printArea td.num,#printArea th.num{text-align:right;}
+    #printArea .grand{font-weight:800;font-size:15px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="biz" id="hdrBiz">Stump Grinding</div>
+  <h1>🪵 Stump<span class="accent">Book</span></h1>
+</header>
+<nav>
+  <button id="tab-dashboard" onclick="showView('dashboard')">Dashboard</button>
+  <button id="tab-builder" onclick="showView('builder')">New Quote</button>
+  <button id="tab-jobs" onclick="showView('jobs')">Job Book</button>
+  <button id="tab-settings" onclick="showView('settings')">Settings</button>
+  <button id="tab-help" onclick="showView('help')">Help</button>
+</nav>
+<main>
+  <section id="view-dashboard" class="view"></section>
+  <section id="view-builder" class="view"></section>
+  <section id="view-jobs" class="view"></section>
+  <section id="view-settings" class="view"></section>
+  <section id="view-help" class="view"></section>
+</main>
+<footer>StumpBook runs entirely on this device. Your jobs and rates are stored only in this browser — export a backup from Settings before clearing browser data.</footer>
+<div id="printArea"></div>
+
+<script>
+"use strict";
+var LS_KEY = "stumpbook.v1";
+
+function defaultSettings(){
+  return {
+    businessName: "My Stump Grinding",
+    ownerName: "",
+    phone: "",
+    ratePerInch: 4.00,       // $ per diameter inch (trade range $2-$7)
+    minCharge: 125,          // call-out minimum per job
+    multiPct: 60,            // additional stumps billed at this % of their own per-inch price
+    haulPerStump: 75,        // haul-away / debris removal adder per stump
+    cleanupPerStump: 25,     // grindings cleanup / level & rake adder per stump
+    fuelPerJob: 18,          // default fuel cost per job
+    teethPerStump: 6,        // default teeth wear cost per stump
+    disposalPerStump: 15,    // default disposal cost per hauled stump
+    taxOn: false,
+    taxRate: 0,
+    quoteTerms: "Quote good for 30 days. Grinding depth approx. 6-8 inches below grade unless noted. Underground utilities are the property owner's responsibility to mark. Payment due on completion."
+  };
+}
+
+function uid(){ return "j" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function num(x){ var n = parseFloat(x); return (isFinite(n) && !isNaN(n)) ? n : 0; }
+function round2(n){ return Math.round((num(n) + Number.EPSILON) * 100) / 100; }
+function money(n){ var v = round2(n); var sign = v < 0 ? "-" : ""; return sign + "$" + Math.abs(v).toFixed(2); }
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function todayStr(){ var d = new Date(); return d.toISOString().slice(0,10); }
+function offsetDate(days){ var d = new Date(); d.setDate(d.getDate() + days); return d.toISOString().slice(0,10); }
+
+/* ---------- Pricing engine (pure, hand-verifiable) ----------
+   - Each stump's base = diameter inches x rate per inch.
+   - The LARGEST stump bills at full rate ("first stump").
+   - Every additional stump bills at multiPct % of its own base.
+   - If the grinding subtotal is below the call-out minimum (and there is
+     at least one stump), the grinding charge is the minimum.
+   - Adders: haul-away and cleanup are per-stump opt-ins.
+-------------------------------------------------------------- */
+function stumpLinePrices(stumps, s){
+  var order = stumps.map(function(st, i){ return i; });
+  order.sort(function(a, b){
+    var d = num(stumps[b].dia) - num(stumps[a].dia);
+    return d !== 0 ? d : a - b;
+  });
+  var res = new Array(stumps.length);
+  order.forEach(function(origIdx, rank){
+    var base = round2(num(stumps[origIdx].dia) * num(s.ratePerInch));
+    var factor = rank === 0 ? 1 : num(s.multiPct) / 100;
+    res[origIdx] = { base: base, factor: factor, price: round2(base * factor) };
+  });
+  return res;
+}
+
+function quoteTotals(job, s){
+  var stumps = job.stumps || [];
+  var lines = stumpLinePrices(stumps, s);
+  var grinding = round2(lines.reduce(function(a, l){ return a + l.price; }, 0));
+  var minimumApplied = stumps.length > 0 && grinding < num(s.minCharge);
+  var grindingCharge = stumps.length === 0 ? 0 : Math.max(grinding, num(s.minCharge));
+  var haulCount = stumps.filter(function(st){ return !!st.haul; }).length;
+  var cleanCount = stumps.filter(function(st){ return !!st.cleanup; }).length;
+  var haulTotal = round2(haulCount * num(s.haulPerStump));
+  var cleanTotal = round2(cleanCount * num(s.cleanupPerStump));
+  var subtotal = round2(grindingCharge + haulTotal + cleanTotal);
+  var tax = s.taxOn ? round2(subtotal * num(s.taxRate) / 100) : 0;
+  var total = round2(subtotal + tax);
+  return { lines: lines, grinding: grinding, grindingCharge: grindingCharge,
+    minimumApplied: minimumApplied, haulCount: haulCount, cleanCount: cleanCount,
+    haulTotal: haulTotal, cleanTotal: cleanTotal, subtotal: subtotal, tax: tax, total: total };
+}
+
+function defaultCosts(job, s){
+  var haulCount = (job.stumps || []).filter(function(st){ return !!st.haul; }).length;
+  return {
+    fuel: num(s.fuelPerJob),
+    teeth: round2(num(s.teethPerStump) * (job.stumps || []).length),
+    disposal: round2(num(s.disposalPerStump) * haulCount),
+    other: 0
+  };
+}
+function costTotal(c){ c = c || {}; return round2(num(c.fuel) + num(c.teeth) + num(c.disposal) + num(c.other)); }
+function jobProfit(job, s){
+  var t = quoteTotals(job, s);
+  var ct = costTotal(job.costs);
+  return { total: t.total, costTotal: ct, profit: round2(t.total - ct) };
+}
+function jobBalance(job, s){
+  var t = quoteTotals(job, s);
+  return round2(t.total - num(job.deposit) - num(job.paid));
+}
+
+/* ---------- State ---------- */
+var state = null;
+
+function seedState(){
+  var s = defaultSettings();
+  s.businessName = "Lone Pine Stump Grinding";
+  var jobs = [
+    { id: uid()+"a", customer: "Dale Hendricks", phone: "918-555-0142", address: "214 Lakeshore Dr",
+      date: offsetDate(-6), status: "paid", deposit: 0, paid: 268,
+      notes: "Gate is 48 in wide — mid-size grinder fits.",
+      stumps: [
+        { dia: 24, species: "Oak", haul: true,  cleanup: true,  note: "Front yard, near drive" },
+        { dia: 18, species: "Pine", haul: false, cleanup: false, note: "" },
+        { dia: 12, species: "Pine", haul: false, cleanup: false, note: "" }
+      ],
+      costs: { fuel: 18, teeth: 18, disposal: 15, other: 0 } },
+    { id: uid()+"b", customer: "Maria Santos", phone: "918-555-0117", address: "809 S Main St",
+      date: offsetDate(-2), status: "quoted", deposit: 0, paid: 0,
+      notes: "Customer getting one more bid Friday.",
+      stumps: [ { dia: 30, species: "Pecan", haul: false, cleanup: false, note: "Back fence line" } ],
+      costs: { fuel: 18, teeth: 6, disposal: 0, other: 0 } },
+    { id: uid()+"c", customer: "Tom Bergeron", phone: "918-555-0199", address: "RR 2 Box 118",
+      date: offsetDate(2), status: "scheduled", deposit: 100, paid: 0,
+      notes: "Five pines from the storm. Watch the septic line on the east side.",
+      stumps: [
+        { dia: 20, species: "Pine", haul: true,  cleanup: false, note: "" },
+        { dia: 16, species: "Pine", haul: true,  cleanup: false, note: "" },
+        { dia: 14, species: "Pine", haul: false, cleanup: false, note: "" },
+        { dia: 10, species: "Pine", haul: false, cleanup: false, note: "" },
+        { dia: 8,  species: "Pine", haul: false, cleanup: false, note: "" }
+      ],
+      costs: { fuel: 18, teeth: 30, disposal: 30, other: 0 } },
+    { id: uid()+"d", customer: "Karen Whitfield", phone: "918-555-0163", address: "47 Dogwood Ln",
+      date: offsetDate(-1), status: "done", deposit: 0, paid: 0,
+      notes: "Ground both, leveled and raked. Invoice left in door.",
+      stumps: [
+        { dia: 22, species: "Sweetgum", haul: false, cleanup: true, note: "" },
+        { dia: 15, species: "Sweetgum", haul: false, cleanup: true, note: "" }
+      ],
+      costs: { fuel: 18, teeth: 12, disposal: 0, other: 0 } }
+  ];
+  return { settings: s, jobs: jobs };
+}
+
+function sanitizeStump(st){
+  st = st || {};
+  return {
+    dia: Math.max(0, num(st.dia)),
+    species: String(st.species == null ? "" : st.species).slice(0, 60),
+    haul: !!st.haul,
+    cleanup: !!st.cleanup,
+    note: String(st.note == null ? "" : st.note).slice(0, 200)
+  };
+}
+function sanitizeJob(j){
+  j = j || {};
+  var statuses = ["quoted","scheduled","done","paid","lost"];
+  var c = j.costs || {};
+  return {
+    id: String(j.id || uid()),
+    customer: String(j.customer == null ? "" : j.customer).slice(0, 120),
+    phone: String(j.phone == null ? "" : j.phone).slice(0, 40),
+    address: String(j.address == null ? "" : j.address).slice(0, 200),
+    date: /^\d{4}-\d{2}-\d{2}$/.test(String(j.date || "")) ? String(j.date) : todayStr(),
+    status: statuses.indexOf(j.status) >= 0 ? j.status : "quoted",
+    deposit: Math.max(0, num(j.deposit)),
+    paid: Math.max(0, num(j.paid)),
+    notes: String(j.notes == null ? "" : j.notes).slice(0, 500),
+    stumps: Array.isArray(j.stumps) ? j.stumps.slice(0, 200).map(sanitizeStump) : [],
+    costs: { fuel: Math.max(0, num(c.fuel)), teeth: Math.max(0, num(c.teeth)),
+             disposal: Math.max(0, num(c.disposal)), other: Math.max(0, num(c.other)) }
+  };
+}
+function sanitizeState(raw){
+  if (!raw || typeof raw !== "object") return null;
+  var s = defaultSettings();
+  var rs = raw.settings || {};
+  Object.keys(s).forEach(function(k){
+    if (rs[k] !== undefined) s[k] = rs[k];
+  });
+  ["ratePerInch","minCharge","haulPerStump","cleanupPerStump","fuelPerJob","teethPerStump","disposalPerStump","taxRate"].forEach(function(k){
+    s[k] = Math.max(0, num(s[k]));
+  });
+  s.multiPct = Math.min(100, Math.max(0, num(s.multiPct)));
+  s.taxOn = !!s.taxOn;
+  ["businessName","ownerName","phone","quoteTerms"].forEach(function(k){ s[k] = String(s[k] == null ? "" : s[k]).slice(0, 500); });
+  return { settings: s, jobs: Array.isArray(raw.jobs) ? raw.jobs.slice(0, 5000).map(sanitizeJob) : [], legal: sanitizeLegal(raw.legal) };
+}
+
+function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){} }
+function load(){
+  var raw = null;
+  try { raw = localStorage.getItem(LS_KEY); } catch(e){}
+  if (raw) {
+    try { state = sanitizeState(JSON.parse(raw)); } catch(e){ state = null; }
+  }
+  if (!state) { state = seedState(); save(); }
+}
+
+/* ---------- Draft (quote builder) ---------- */
+var draft = null;
+function newDraft(){
+  draft = { customer: "", phone: "", address: "", date: todayStr(), notes: "",
+    stumps: [ { dia: 18, species: "", haul: false, cleanup: false, note: "" } ] };
+}
+
+/* ---------- Views ---------- */
+var currentView = "dashboard";
+function showView(v){
+  currentView = v;
+  ["dashboard","builder","jobs","settings","help"].forEach(function(name){
+    document.getElementById("view-" + name).className = "view" + (name === v ? " active" : "");
+    document.getElementById("tab-" + name).className = name === v ? "active" : "";
+  });
+  if (v === "dashboard") renderDashboard();
+  if (v === "builder") renderBuilder();
+  if (v === "jobs") renderJobs();
+  if (v === "settings") renderSettings();
+  if (v === "help") renderHelp();
+  document.getElementById("hdrBiz").textContent = state.settings.businessName || "Stump Grinding";
+}
+
+function renderDashboard(){
+  var s = state.settings;
+  var quoted = 0, booked = 0, collected = 0, owed = 0, profitDone = 0, stumpCount = 0;
+  state.jobs.forEach(function(j){
+    var t = quoteTotals(j, s);
+    stumpCount += j.stumps.length;
+    if (j.status === "quoted") quoted += t.total;
+    if (j.status === "scheduled" || j.status === "done" || j.status === "paid") booked += t.total;
+    collected += num(j.deposit) + num(j.paid);
+    if (j.status === "done") owed += Math.max(0, jobBalance(j, s));
+    if (j.status === "done" || j.status === "paid") profitDone += jobProfit(j, s).profit;
+  });
+  var upcoming = state.jobs.filter(function(j){ return j.status === "scheduled"; })
+    .sort(function(a, b){ return a.date < b.date ? -1 : 1; });
+  var html = "";
+  html += '<div class="grid">'
+    + stat(booked, "Booked work") + stat(quoted, "Out in quotes")
+    + stat(collected, "Collected") + stat(owed, "Owed on done jobs")
+    + stat(profitDone, "Profit (done/paid)") + stat(stumpCount, "Stumps on the books")
+    + "</div>";
+  html += '<div class="card"><h2>Route — scheduled jobs</h2>';
+  if (!upcoming.length) html += '<div class="empty">No scheduled jobs. Turn a quote into a route from the Job Book.</div>';
+  upcoming.forEach(function(j){
+    var t = quoteTotals(j, s);
+    html += "<p><strong>" + esc(j.date) + " — " + esc(j.customer) + "</strong> · "
+      + esc(j.address) + " · " + j.stumps.length + " stump" + (j.stumps.length === 1 ? "" : "s")
+      + " · " + money(t.total) + (num(j.deposit) ? " · deposit " + money(j.deposit) : "") + "</p>";
+  });
+  html += '<button class="btn" onclick="showView(\'builder\')">+ New quote</button></div>';
+  html += '<div class="card"><h2>How StumpBook prices</h2><p class="muted">Largest stump at your full per-inch rate ('
+    + money(s.ratePerInch) + '/in), every additional stump at ' + esc(String(s.multiPct))
+    + '% of its own per-inch price, ' + money(s.minCharge) + ' call-out minimum per job. Haul-away '
+    + money(s.haulPerStump) + '/stump and cleanup ' + money(s.cleanupPerStump)
+    + '/stump when you tick them. Change any of it in Settings.</p></div>';
+  document.getElementById("view-dashboard").innerHTML = html;
+}
+function stat(v, lbl){ return '<div class="stat"><div class="num">' + money(v) + '</div><div class="lbl">' + lbl + "</div></div>"; }
+
+function draftTotals(){ return quoteTotals({ stumps: draft.stumps }, state.settings); }
+
+function renderBuilder(){
+  var s = state.settings;
+  var html = '<div class="card"><h2>New quote</h2>';
+  html += '<div class="row"><div><label>Customer name</label><input type="text" id="d-customer" value="' + esc(draft.customer) + '" oninput="draft.customer=this.value"></div>'
+    + '<div><label>Phone</label><input type="tel" id="d-phone" value="' + esc(draft.phone) + '" oninput="draft.phone=this.value"></div></div>';
+  html += '<div class="row"><div><label>Address / location</label><input type="text" id="d-address" value="' + esc(draft.address) + '" oninput="draft.address=this.value"></div>'
+    + '<div><label>Job date</label><input type="date" id="d-date" value="' + esc(draft.date) + '" onchange="draft.date=this.value"></div></div>';
+  html += '<label>Job notes (access, utilities, gates)</label><textarea id="d-notes" oninput="draft.notes=this.value">' + esc(draft.notes) + "</textarea>";
+  html += "<h3>Stumps</h3><div id='d-stumps'>";
+  draft.stumps.forEach(function(st, i){
+    html += '<div class="stump-row"><div class="row">'
+      + '<div><label>Diameter (inches)</label><input inputmode="decimal" type="number" min="0" step="0.5" value="' + esc(String(st.dia)) + '" oninput="draftStump(' + i + ',\'dia\',this.value)"></div>'
+      + '<div><label>Species</label><input type="text" value="' + esc(st.species) + '" oninput="draftStump(' + i + ',\'species\',this.value)"></div>'
+      + '<div><label class="chk"><input type="checkbox" ' + (st.haul ? "checked" : "") + ' onchange="draftStump(' + i + ',\'haul\',this.checked)"> Haul away (+' + money(s.haulPerStump) + ")</label></div>"
+      + '<div><label class="chk"><input type="checkbox" ' + (st.cleanup ? "checked" : "") + ' onchange="draftStump(' + i + ',\'cleanup\',this.checked)"> Cleanup (+' + money(s.cleanupPerStump) + ")</label></div>"
+      + "</div>"
+      + '<label>Note</label><input type="text" value="' + esc(st.note) + '" oninput="draftStump(' + i + ',\'note\',this.value)">'
+      + '<div style="margin-top:6px"><span class="muted" id="d-line-' + i + '"></span> '
+      + '<button class="btn danger small" onclick="removeStump(' + i + ')">Remove stump</button></div></div>';
+  });
+  html += "</div>";
+  html += '<button class="btn secondary" onclick="addStump()">+ Add stump</button>';
+  html += '<div id="d-totals"></div>';
+  html += '<div style="margin-top:10px"><button class="btn" onclick="saveDraft()">Save quote to Job Book</button></div>';
+  html += "</div>";
+  document.getElementById("view-builder").innerHTML = html;
+  refreshBuilderTotals();
+}
+function draftStump(i, field, value){
+  if (field === "dia") draft.stumps[i].dia = Math.max(0, num(value));
+  else draft.stumps[i][field] = value;
+  refreshBuilderTotals();
+}
+function addStump(){ draft.stumps.push({ dia: 14, species: "", haul: false, cleanup: false, note: "" }); renderBuilder(); }
+function removeStump(i){ draft.stumps.splice(i, 1); if (!draft.stumps.length) draft.stumps.push({ dia: 0, species: "", haul: false, cleanup: false, note: "" }); renderBuilder(); }
+function refreshBuilderTotals(){
+  var s = state.settings;
+  var t = draftTotals();
+  draft.stumps.forEach(function(st, i){
+    var el = document.getElementById("d-line-" + i);
+    if (el) {
+      var l = t.lines[i];
+      el.textContent = st.dia > 0
+        ? money(l.base) + " base" + (l.factor < 1 ? " × " + Math.round(l.factor * 100) + "% multi-stump = " + money(l.price) : " (largest — full rate) = " + money(l.price))
+        : "Enter a diameter";
+    }
+  });
+  var el2 = document.getElementById("d-totals");
+  if (el2) el2.innerHTML = totalsTable(t, s);
+}
+function totalsTable(t, s){
+  var html = '<table class="totals"><tr><td>Grinding</td><td class="num">' + money(t.grinding) + "</td></tr>";
+  if (t.minimumApplied) html += '<tr><td>Minimum charge applied</td><td class="num">' + money(t.grindingCharge) + "</td></tr>";
+  if (t.haulCount) html += "<tr><td>Haul-away × " + t.haulCount + '</td><td class="num">' + money(t.haulTotal) + "</td></tr>";
+  if (t.cleanCount) html += "<tr><td>Cleanup × " + t.cleanCount + '</td><td class="num">' + money(t.cleanTotal) + "</td></tr>";
+  if (s.taxOn) html += "<tr><td>Tax (" + esc(String(s.taxRate)) + '%)</td><td class="num">' + money(t.tax) + "</td></tr>";
+  html += '<tr class="grand"><td>Total</td><td class="num">' + money(t.total) + "</td></tr></table>";
+  return html;
+}
+function saveDraft(){
+  if (!draft.customer.trim()) { alert("Enter the customer name first."); return; }
+  var job = sanitizeJob({ id: uid(), customer: draft.customer, phone: draft.phone, address: draft.address,
+    date: draft.date, status: "quoted", deposit: 0, paid: 0, notes: draft.notes, stumps: draft.stumps });
+  job.costs = defaultCosts(job, state.settings);
+  state.jobs.unshift(job);
+  save();
+  newDraft();
+  showView("jobs");
+}
+
+function renderJobs(){
+  var s = state.settings;
+  var html = '<div class="card"><h2>Job Book</h2>';
+  if (!state.jobs.length) html += '<div class="empty">No jobs yet. Build your first quote.</div>';
+  state.jobs.forEach(function(j, idx){
+    var t = quoteTotals(j, s);
+    var p = jobProfit(j, s);
+    var bal = jobBalance(j, s);
+    html += '<div class="card" style="margin-bottom:10px"><div class="job-head"><div>'
+      + '<span class="who">' + esc(j.customer || "(no name)") + '</span> <span class="pill ' + j.status + '">' + j.status + "</span><br>"
+      + '<span class="muted">' + esc(j.date) + " · " + esc(j.address) + (j.phone ? " · " + esc(j.phone) : "") + "</span></div>"
+      + '<div style="text-align:right"><strong>' + money(t.total) + "</strong><br>"
+      + '<span class="muted">profit ' + money(p.profit) + " · balance " + money(bal) + "</span></div></div>";
+    html += "<table><tr><th>Stump</th><th>Species</th><th class='num'>Base</th><th class='num'>Price</th><th>Adders</th></tr>";
+    j.stumps.forEach(function(st, i){
+      var l = t.lines[i];
+      html += "<tr><td>" + esc(String(st.dia)) + ' in</td><td>' + esc(st.species || "—") + '</td><td class="num">'
+        + money(l.base) + '</td><td class="num">' + money(l.price) + (l.factor < 1 ? ' <span class="muted">(' + Math.round(l.factor * 100) + "%)</span>" : "")
+        + "</td><td>" + [st.haul ? "haul" : "", st.cleanup ? "cleanup" : ""].filter(Boolean).join(", ") + "</td></tr>";
+    });
+    html += "</table>";
+    if (t.minimumApplied) html += '<div class="warn">Grinding came to ' + money(t.grinding) + " — call-out minimum of " + money(s.minCharge) + " applied.</div>";
+    if (j.notes) html += '<p class="muted">' + esc(j.notes) + "</p>";
+    html += "<details><summary>Money &amp; status</summary>"
+      + '<div class="row"><div><label>Status</label><select onchange="jobField(' + idx + ',\'status\',this.value)">'
+      + ["quoted","scheduled","done","paid","lost"].map(function(st){ return '<option value="' + st + '"' + (j.status === st ? " selected" : "") + ">" + st + "</option>"; }).join("")
+      + "</select></div>"
+      + '<div><label>Deposit $</label><input inputmode="decimal" type="number" min="0" step="0.01" value="' + esc(String(j.deposit)) + '" onchange="jobField(' + idx + ',\'deposit\',this.value)"></div>'
+      + '<div><label>Paid (beyond deposit) $</label><input inputmode="decimal" type="number" min="0" step="0.01" value="' + esc(String(j.paid)) + '" onchange="jobField(' + idx + ',\'paid\',this.value)"></div></div>'
+      + '<div class="row"><div><label>Fuel $</label><input inputmode="decimal" type="number" min="0" step="0.01" value="' + esc(String(j.costs.fuel)) + '" onchange="jobCost(' + idx + ',\'fuel\',this.value)"></div>'
+      + '<div><label>Teeth wear $</label><input inputmode="decimal" type="number" min="0" step="0.01" value="' + esc(String(j.costs.teeth)) + '" onchange="jobCost(' + idx + ',\'teeth\',this.value)"></div>'
+      + '<div><label>Disposal $</label><input inputmode="decimal" type="number" min="0" step="0.01" value="' + esc(String(j.costs.disposal)) + '" onchange="jobCost(' + idx + ',\'disposal\',this.value)"></div>'
+      + '<div><label>Other cost $</label><input inputmode="decimal" type="number" min="0" step="0.01" value="' + esc(String(j.costs.other)) + '" onchange="jobCost(' + idx + ',\'other\',this.value)"></div></div>'
+      + '<p class="muted">Total ' + money(t.total) + " · costs " + money(p.costTotal) + " · profit <strong>" + money(p.profit) + "</strong> · balance owed " + money(bal) + "</p></details>";
+    html += '<div style="margin-top:8px"><button class="btn small" onclick="printQuote(' + idx + ')">Print quote</button> '
+      + '<button class="btn danger small" onclick="deleteJob(' + idx + ')">Delete</button></div>';
+    html += "</div>";
+  });
+  html += "</div>";
+  document.getElementById("view-jobs").innerHTML = html;
+}
+function jobField(idx, field, value){
+  if (field === "status") state.jobs[idx].status = value;
+  else state.jobs[idx][field] = Math.max(0, num(value));
+  save(); renderJobs();
+  if (currentView === "jobs") document.getElementById("view-jobs").scrollTop = 0;
+}
+function jobCost(idx, field, value){ state.jobs[idx].costs[field] = Math.max(0, num(value)); save(); renderJobs(); }
+function deleteJob(idx){ if (confirm("Delete this job? This cannot be undone.")) { state.jobs.splice(idx, 1); save(); renderJobs(); } }
+
+function printQuote(idx){
+  var j = state.jobs[idx]; var s = state.settings; var t = quoteTotals(j, s);
+  var html = "<h1>" + esc(s.businessName) + "</h1><p>Stump Grinding Quote"
+    + (s.phone ? " · " + esc(s.phone) : "") + "</p>"
+    + "<p><strong>" + esc(j.customer) + "</strong><br>" + esc(j.address) + "<br>Date: " + esc(j.date) + "</p>"
+    + "<table><tr><th>Stump</th><th>Species</th><th class='num'>Price</th><th>Adders</th></tr>";
+  j.stumps.forEach(function(st, i){
+    html += "<tr><td>" + esc(String(st.dia)) + " in</td><td>" + esc(st.species || "—") + "</td><td class='num'>"
+      + money(t.lines[i].price) + "</td><td>" + [st.haul ? "haul-away " + money(s.haulPerStump) : "", st.cleanup ? "cleanup " + money(s.cleanupPerStump) : ""].filter(Boolean).join(", ") + "</td></tr>";
+  });
+  html += "</table><table><tr><td>Grinding" + (t.minimumApplied ? " (minimum charge)" : "") + "</td><td class='num'>" + money(t.grindingCharge) + "</td></tr>";
+  if (t.haulCount) html += "<tr><td>Haul-away</td><td class='num'>" + money(t.haulTotal) + "</td></tr>";
+  if (t.cleanCount) html += "<tr><td>Cleanup</td><td class='num'>" + money(t.cleanTotal) + "</td></tr>";
+  if (s.taxOn) html += "<tr><td>Tax</td><td class='num'>" + money(t.tax) + "</td></tr>";
+  html += "<tr class='grand'><td>Total</td><td class='num'>" + money(t.total) + "</td></tr></table>"
+    + "<p>" + esc(s.quoteTerms) + "</p>"
+    + "<p>Accepted by: ______________________________ &nbsp; Date: ____________</p>";
+  document.getElementById("printArea").innerHTML = html;
+  window.print();
+}
+
+function renderSettings(){
+  var s = state.settings;
+  function f(id, label, val, step){ return '<div><label>' + label + '</label><input inputmode="decimal" type="number" min="0" step="' + (step || "0.01") + '" id="' + id + '" value="' + esc(String(val)) + '"></div>'; }
+  var html = '<div class="card"><h2>Business</h2><div class="row">'
+    + '<div><label>Business name (prints on quotes)</label><input type="text" id="s-biz" value="' + esc(s.businessName) + '"></div>'
+    + '<div><label>Phone</label><input type="tel" id="s-phone" value="' + esc(s.phone) + '"></div></div></div>';
+  html += '<div class="card"><h2>Your rates</h2><div class="row">'
+    + f("s-rate", "Price per diameter inch ($)", s.ratePerInch)
+    + f("s-min", "Call-out minimum per job ($)", s.minCharge)
+    + f("s-multi", "Additional stumps at % of full price", s.multiPct, "1")
+    + "</div><div class='row'>"
+    + f("s-haul", "Haul-away adder per stump ($)", s.haulPerStump)
+    + f("s-clean", "Cleanup adder per stump ($)", s.cleanupPerStump)
+    + "</div>"
+    + '<p class="muted">Trade reference: stump grinding commonly runs $2–$7 per diameter inch with a $100–$150 minimum, additional stumps at 50–70% of the first-stump rate, and haul-away $50–$150 per stump.</p></div>';
+  html += '<div class="card"><h2>Default job costs (for profit math)</h2><div class="row">'
+    + f("s-fuel", "Fuel per job ($)", s.fuelPerJob)
+    + f("s-teeth", "Teeth wear per stump ($)", s.teethPerStump)
+    + f("s-disp", "Disposal per hauled stump ($)", s.disposalPerStump)
+    + "</div></div>";
+  html += '<div class="card"><h2>Tax &amp; quote terms</h2>'
+    + '<label class="chk"><input type="checkbox" id="s-taxon" ' + (s.taxOn ? "checked" : "") + '> Charge sales tax</label>'
+    + '<div class="row"><div><label>Tax rate %</label><input inputmode="decimal" type="number" min="0" step="0.01" id="s-taxrate" value="' + esc(String(s.taxRate)) + '"></div></div>'
+    + '<label>Terms printed on every quote</label><textarea id="s-terms">' + esc(s.quoteTerms) + "</textarea></div>";
+  html += '<button class="btn" onclick="saveSettings()">Save settings</button></div>';
+  html += '<div class="card"><h2>Backup</h2><p class="muted">Your data lives only in this browser. Export a backup file regularly; import restores it on any device.</p>'
+    + '<button class="btn secondary" onclick="exportData()">Export backup (JSON)</button> '
+    + '<label class="btn secondary" style="cursor:pointer">Import backup<input type="file" accept=".json,application/json" style="display:none" onchange="importData(this)"></label></div>';
+  html += '<div class="card"><h2>Demo data</h2><p class="muted">The app loads with four sample jobs so you can see the math. Clear them when you are ready to run your real book.</p>'
+    + '<button class="btn danger" onclick="clearDemo()">Clear all jobs</button></div>';
+  document.getElementById("view-settings").innerHTML = html + '<div id="legalSection"></div>';
+}
+function renderHelp(){
+  var html = '<div class="card"><h2>What StumpBook does</h2>'
+    + '<p class="muted">A stump-grinding quote and job book: <b>New Quote</b> prices stumps by diameter inch against your rate card (minimum charge, multi-stump discount, haul-away and cleanup adders, optional sales tax); the <b>Job Book</b> tracks each job from quoted to paid with deposits, balances, and per-job costs, so the <b>Dashboard</b> can show booked work, money collected, and real profit on finished jobs. Quotes print clean for the customer.</p></div>';
+  html += '<div class="card"><h2>Where your data lives</h2>'
+    + '<p class="muted">Your jobs and rates are stored only in this browser on this device — no account, no cloud. Export a backup from Settings (Backup → Export backup (JSON)) before clearing browser data or switching devices; Import backup restores it anywhere.</p></div>';
+  html += '<div class="card"><h2>The honest limits</h2>'
+    + '<p class="muted">StumpBook prices from the rates <i>you</i> set in Settings — the trade ranges quoted there are references, not recommendations, and the math is only as good as the diameter you measure (measure at ground level, flare included, the way you set your rates). It does not check for buried utilities or mark lines: call 811 before you grind. It keeps records and prints quotes; it does not send invoices, take payments, or remind customers.</p></div>';
+  document.getElementById("view-help").innerHTML = html;
+}
+function gv(id){ var el = document.getElementById(id); return el ? el.value : ""; }
+function gc(id){ var el = document.getElementById(id); return el ? !!el.checked : false; }
+function saveSettings(){
+  var s = state.settings;
+  s.businessName = gv("s-biz").slice(0, 120) || s.businessName;
+  s.phone = gv("s-phone").slice(0, 40);
+  s.ratePerInch = Math.max(0, num(gv("s-rate")));
+  s.minCharge = Math.max(0, num(gv("s-min")));
+  s.multiPct = Math.min(100, Math.max(0, num(gv("s-multi"))));
+  s.haulPerStump = Math.max(0, num(gv("s-haul")));
+  s.cleanupPerStump = Math.max(0, num(gv("s-clean")));
+  s.fuelPerJob = Math.max(0, num(gv("s-fuel")));
+  s.teethPerStump = Math.max(0, num(gv("s-teeth")));
+  s.disposalPerStump = Math.max(0, num(gv("s-disp")));
+  s.taxOn = gc("s-taxon");
+  s.taxRate = Math.max(0, num(gv("s-taxrate")));
+  s.quoteTerms = gv("s-terms").slice(0, 500);
+  save(); showView("settings");
+  alert("Settings saved.");
+}
+function clearDemo(){ if (confirm("Delete ALL jobs? Export a backup first if you need them.")) { state.jobs = []; save(); showView("dashboard"); } }
+function exportData(){
+  var payload = JSON.stringify({ app: "stumpbook", version: 1, settings: state.settings, jobs: state.jobs }, null, 2);
+  try {
+    var blob = new Blob([payload], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "stumpbook-backup.json";
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  } catch(e){ alert("Export not supported in this browser."); }
+}
+function importData(input){
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    try {
+      var parsed = JSON.parse(String(reader.result));
+      if (!parsed || parsed.app !== "stumpbook") { alert("That file is not a StumpBook backup."); return; }
+      var clean = sanitizeState(parsed);
+      if (!clean) { alert("That backup could not be read."); return; }
+      state = clean; save(); newDraft(); showView("dashboard");
+      alert("Backup imported: " + state.jobs.length + " jobs.");
+    } catch(e){ alert("That file could not be imported — it is not valid backup data."); }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- Init ---------- */
+load();
+newDraft();
+showView("dashboard");
+
+/* ================= Legal — Terms of Use acceptance (catalog pattern v1.0) ================= */
+var TERMS_VERSION = "1.0";
+var LEGAL_APP_NAME = "StumpBook";
+var LEGAL_HAS_DISCLAIMER = true;
+var LEGAL_TERMS_HTML = "<h3>Terms of Use \u2014 White Wolf Digital Apps</h3><p><b>Version 1.0 (DRAFT \u2014 pending attorney review)</b></p><p><b>Seller: White Wolf Tree Service LLC, selling digital products under the name \"White Wolf Digital\"</b></p><p><b>Contact: whitewolfoklahoma@gmail.com</b></p><h4>1. What you're buying</h4><p>Our apps (including ForgeFit AI, ForgeKitchen, TreeBid Pro, SnowBid,</p><p>WashPrice Pro, RoofSquares, JobProfit Tracker, PastureLedger, and the other</p><p>titles sold under White Wolf Digital) are single-file software tools. When</p><p>you buy one, you are buying a <b>license to use the file</b>, not ownership of</p><p>the software itself.</p><h4>2. Your license</h4><ul><li>You may use the app for your own personal or business work.</li><li>You may open it on your own devices (phone, tablet, computer) and move your</li></ul><p>  own data between them using the app's built-in backup/export tools.</p><ul><li>You may <b>not</b> resell, redistribute, give away, upload, or share the app</li></ul><p>  file (or a copy of it) with anyone else \u2014 including posting it online,</p><p>  bundling it with other products, or selling access to it.</p><ul><li>You may <b>not</b> claim the app as your own work, remove its branding or</li></ul><p>  notices, or use it to build a competing product for resale.</p><ul><li>One purchase = one buyer. A business purchase covers the buyer and their</li></ul><p>  own employees using it for that business's work; it does not cover other</p><p>  businesses.</p><h4>3. Your data stays yours \u2014 and stays on your device</h4><ul><li>The current versions of our apps run <b>entirely on your device</b>. They have</li></ul><p>  no accounts, no sign-in, no analytics, and they collect, transmit, and store</p><p>  <b>none</b> of your information on any server. We never see your data.</p><ul><li>Your records are stored in your browser/app storage on your device. **You</li></ul><p>  are responsible for backing them up** using the app's export tools. If you</p><p>  clear your browser data, lose your device, or uninstall the app, your</p><p>  records may be permanently lost, and we cannot recover them \u2014 we never had</p><p>  a copy.</p><ul><li>Files you export (backups, quotes, PDFs) are under your control. Where you</li></ul><p>  store or send them is up to you.</p><h4>4. Estimates are tools, not guarantees</h4><p>Every number our apps produce \u2014 bids, prices, costs, calorie targets,</p><p>projections, schedules, totals \u2014 is an **estimate generated from the</p><p>information you enter and the settings you choose**. Outputs are aids for</p><p>your own judgment, not guarantees of price, profit, outcome, or result. You</p><p>are responsible for checking any output before relying on it (see also the</p><p>disclaimer that applies to your app: Health Disclaimer for fitness/nutrition</p><p>apps, Estimator Disclaimer for contractor tools). If an input is wrong, the</p><p>output will be wrong.</p><h4>5. Acceptable use</h4><p>Don't use the apps to break the law, infringe anyone's rights, or</p><p>misrepresent quotes, invoices, or records to your own customers. For the</p><p>fitness apps, the guardrails in the app (healthy-rate limits, calorie floor)</p><p>are part of the product \u2014 don't treat the app as a way around them.</p><h4>6. Provided \"as is\"</h4><p>The apps are provided **\"as is\" and \"as available,\" without warranties of</p><p>any kind**, express or implied \u2014 including merchantability, fitness for a</p><p>particular purpose, accuracy of calculations, and uninterrupted or</p><p>error-free operation \u2014 to the maximum extent allowed by law. Software has</p><p>bugs; browsers change; we work to fix problems but do not promise any app is</p><p>error-free or will work on every device or browser forever.</p><h4>7. Limitation of liability</h4><p>To the maximum extent allowed by law:</p><ul><li>We are **not liable for indirect, incidental, special, or consequential</li></ul><p>  damages** \u2014 including lost profits, lost or mispriced jobs, lost data, or</p><p>  business interruption \u2014 arising from use of the apps.</p><ul><li>Our total liability for any claim connected to an app is limited to the</li></ul><p>  <b>amount you paid for that app</b>.</p><ul><li>Nothing in these terms limits liability that cannot legally be limited.</li></ul><h4>8. Refunds</h4><p>Refunds are handled **by the storefront you bought from, under that</p><p>storefront's policy** \u2014 Gumroad's refund policy for Gumroad purchases, and</p><p>Google Play's refund policy for Play purchases. These terms do not add to,</p><p>replace, or override the storefront's refund rules. If a file is defective</p><p>and won't open, contact us at whitewolfoklahoma@gmail.com and we'll fix or</p><p>replace the file.</p><h4>9. Updates and changes to these terms</h4><ul><li>We may release updated versions of an app. Updates may add, change, or</li></ul><p>  remove features.</p><ul><li>We may update these terms. The version you agreed to is recorded in the</li></ul><p>  app (version number and date) at first-run acceptance. If terms change,</p><p>  the app may ask you to accept the new version once on next open. Updated</p><p>  terms apply going forward, not retroactively.</p><ul><li>If you don't agree to an updated version of the terms, stop using the app.</li></ul><h4>10. Governing law</h4><p>These terms are governed by the laws of the <b>State of Oklahoma</b>, USA.</p><p>(Attorney to confirm governing law and venue before publication.)</p><h4>11. Contact</h4><p>White Wolf Tree Service LLC (White Wolf Digital) \u2014</p><p>whitewolfoklahoma@gmail.com.</p><h4>CONNECTED FEATURES \u2014 takes effect only when these features ship</h4><p>*The sections below apply only to future connected features (device sync via</p><p>Health Connect, AI voice logging, and the AI Goal Preview in ForgeFit). They</p><p>do not apply to the current offline versions, which never transmit data.*</p><ul><li><b>Opt-in only.</b> Connected features are off by default. Each one asks for</li></ul><p>  your separate, explicit consent \u2014 on its own consent screen, in plain</p><p>  language \u2014 before anything leaves your device. Declining never disables</p><p>  the app's offline features.</p><ul><li><b>What gets sent.</b> Only what the consent screen names, only when you use</li></ul><p>  the feature: for example, a meal description (text, or audio only if cloud</p><p>  transcription is on) for AI voice logging, or the single photo you choose</p><p>  for an AI Goal Preview.</p><ul><li><b>No retention by us.</b> Our relay service passes your request to the named</li></ul><p>  AI provider and keeps nothing \u2014 no copies of your photos, audio,</p><p>  transcripts, or entries are stored on our servers. Provider handling is</p><p>  described on the consent screen and in the Privacy Policy.</p><ul><li><b>Health data stays on the device.</b> Device sync (Health Connect) reads</li></ul><p>  your health data on your phone and stores it in the app on your phone. It</p><p>  is not uploaded to us.</p><ul><li><b>Allowances.</b> Some connected features run on third-party AI services we</li></ul><p>  pay for per use, so they may include a monthly allowance described in the</p><p>  app (for example, a set number of AI previews or voice entries per month),</p><p>  with optional additional credits. Allowances and pricing will be shown in</p><p>  the app before you use the feature; they are not a subscription unless the</p><p>  app says so in plain words.</p><ul><li><b>Permissions.</b> Connected features may request device permissions (such</li></ul><p>  as Health Connect access or the microphone) at the moment you first use</p><p>  them. You can revoke permissions any time in your device settings; the</p><p>  related feature will simply stop working.</p>";
+var LEGAL_DISCLAIMER_HTML = "<h3>Estimator Disclaimer \u2014 Contractor &amp; Trade Tools</h3><p>**Applies to: TreeBid Pro, SnowBid, WashPrice Pro, RoofSquares, JobProfit</p><p>Tracker, FieldForms Toolkit, PaintPro, FenceDeck, MarketMaker, and the other</p><p>estimating/pricing tools sold under White Wolf Digital \u2014 including bundles</p><p>that contain them.**</p><h4>Estimating aids, not finished quotes</h4><ul><li>These apps are <b>estimating and record-keeping aids</b>. Every bid, price,</li></ul><p>  cost, measurement, and total they produce is an **estimate based on the</p><p>  information and rates you enter**.</p><ul><li>**You \u2014 the business owner \u2014 are responsible for verifying everything</li></ul><p>  before you quote a customer:** measurements and quantities, site</p><p>  conditions, your current material and labor costs, your rates and margins,</p><p>  taxes, permit and license requirements, disposal rules, and any contract</p><p>  terms.</p><ul><li>Default rates, presets, and sample data included in the apps are starting</li></ul><p>  points only. They are not market prices, not industry standards, and not</p><p>  a recommendation of what you should charge.</p><ul><li>A saved quote keeps the prices in effect when you created it (price</li></ul><p>  snapshot). Changing your presets later does not change saved quotes \u2014</p><p>  and a saved quote is still your responsibility to review before sending.</p><h4>Specific tools</h4><ul><li><b>TreeBid Pro:</b> tree work is dangerous and site-specific. Difficulty</li></ul><p>  factors and presets cannot see the actual tree, lean, rot, targets, or</p><p>  access. Inspect every job in person before final pricing. The \"Invoice</p><p>  with Wave\" feature is an open-and-paste handoff \u2014 TreeBid does not</p><p>  connect to Wave, and the invoice you send from Wave is yours.</p><ul><li><b>RoofSquares / measurement tools:</b> confirm roof measurements and pitch</li></ul><p>  in person or by your usual method before ordering materials.</p><ul><li><b>SnowBid / seasonal tools:</b> route times, snowfall amounts, and service</li></ul><p>  pricing vary by storm and site; seasonal contracts are your agreement</p><p>  with your customer, on your terms.</p><ul><li><b>JobProfit Tracker:</b> profit figures depend on the costs you enter.</li></ul><p>  The app is not accounting or tax software and does not replace your</p><p>  bookkeeper or accountant.</p><h4>Bottom line</h4><p>If an output and your judgment disagree, trust your judgment \u2014 then fix the</p><p>input. We are not responsible for jobs won, lost, or mispriced based on app</p><p>outputs, within the limits of the Terms of Use.</p>";
+(function(){
+  var lst = document.createElement("style");
+  lst.textContent = "@media print{ #legalOverlay{ display:none !important; } }";
+  document.head.appendChild(lst);
+})();
+function sanitizeLegal(v){
+  if(!v || typeof v !== "object") return null;
+  if(typeof v.termsVersion !== "string" || typeof v.acceptedDate !== "string") return null;
+  return { termsVersion: v.termsVersion.slice(0, 10), acceptedDate: v.acceptedDate.slice(0, 40), disclaimerShown: !!v.disclaimerShown };
+}
+function legalRecord(){
+  try{ var s = state; return (s && s.legal) ? sanitizeLegal(s.legal) : null; }catch(e){ return null; }
+}
+function legalVersionCmp(a, b){
+  var pa = String(a).split("."), pb = String(b).split(".");
+  for(var i = 0; i < 3; i++){ var d = (parseInt(pa[i], 10) || 0) - (parseInt(pb[i], 10) || 0); if(d) return d; }
+  return 0;
+}
+function legalAcceptLine(){
+  var rec = legalRecord();
+  if(rec && rec.acceptedDate) return "You agreed to Terms v" + rec.termsVersion + " on " + rec.acceptedDate.slice(0, 10) + ".";
+  return "No Terms acceptance is recorded on this device yet \u2014 the current Terms will be shown for your agreement.";
+}
+function legalSectionHTML(){
+  var h = '<div style="border-top:2px solid rgba(127,127,127,.35);margin-top:20px;padding-top:14px;">'
+    + '<h2>Legal</h2>'
+    + '<p>' + legalAcceptLine() + '</p>'
+    + '<h3>Terms of Use (v' + TERMS_VERSION + ')</h3>'
+    + '<div style="max-height:340px;overflow-y:auto;border:1px solid rgba(127,127,127,.4);border-radius:8px;padding:10px 14px;font-size:14px;line-height:1.55;">' + LEGAL_TERMS_HTML + '</div>';
+  if(LEGAL_HAS_DISCLAIMER){
+    h += '<h3>Estimator Disclaimer</h3>'
+      + '<div style="max-height:260px;overflow-y:auto;border:1px solid rgba(127,127,127,.4);border-radius:8px;padding:10px 14px;font-size:14px;line-height:1.55;">' + LEGAL_DISCLAIMER_HTML + '</div>';
+  }
+  h += '<h3>Privacy</h3>'
+    + '<p>This app collects no data. It has no accounts, no sign-in, no analytics, and no server \u2014 everything you enter is stored only on this device, in this browser\u2019s storage, and nothing is transmitted anywhere. Files you export (backups, quotes, prints) are under your control. You are responsible for backing up your records with the app\u2019s export tools.</p>'
+    + '<p>Sold by White Wolf Tree Service LLC (White Wolf Digital) \u2014 whitewolfoklahoma@gmail.com</p>'
+    + '</div>';
+  return h;
+}
+function legalFillSection(){
+  var el = document.getElementById("legalSection");
+  if(!el) return;
+  var sig = legalAcceptLine();
+  if(el.getAttribute("data-legal-filled") === sig) return;
+  el.innerHTML = legalSectionHTML(); el.setAttribute("data-legal-filled", sig);
+}
+function legalRefreshSection(){
+  var el = document.getElementById("legalSection");
+  if(el){ el.innerHTML = legalSectionHTML(); el.setAttribute("data-legal-filled", legalAcceptLine()); }
+}
+function legalShowOverlay(isUpdate){
+  if(document.getElementById("legalOverlay")) return;
+  var ov = document.createElement("div");
+  ov.id = "legalOverlay";
+  ov.setAttribute("style", "position:fixed;inset:0;z-index:99999;background:rgba(8,10,14,.74);overflow-y:auto;padding:20px 12px;display:flex;align-items:flex-start;justify-content:center;");
+  var discBtn = LEGAL_HAS_DISCLAIMER ? '<button type="button" id="legalReadDisc" style="min-height:44px;padding:10px 14px;border-radius:10px;border:1px solid #9aa4b2;background:#ffffff;color:#1c2733;font-size:15px;cursor:pointer;">Read the Estimator Disclaimer</button>' : '';
+  var checkLabel = LEGAL_HAS_DISCLAIMER ? "I have read the disclaimer and I agree to the Terms of Use" : "I have read and I agree to the Terms of Use";
+  ov.innerHTML = '<div style="background:#ffffff;color:#1c2733;max-width:560px;width:100%;border-radius:14px;padding:22px 20px;box-shadow:0 18px 50px rgba(0,0,0,.45);font-size:15px;line-height:1.55;">'
+    + '<h2 style="margin:0 0 6px;font-size:21px;">' + LEGAL_APP_NAME + ' \u2014 Terms of Use</h2>'
+    + (isUpdate ? '<p style="background:#fdf3d7;border:1px solid #e4cf8a;border-radius:8px;padding:8px 10px;"><b>Our terms were updated (v' + TERMS_VERSION + ').</b></p>' : '')
+    + '<p style="font-size:16px;"><b>Your data stays on your device.</b><br><b>Estimates are aids, not guarantees.</b><br><b>You\'re responsible for checking outputs before you rely on them.</b></p>'
+    + '<p>The full Terms' + (LEGAL_HAS_DISCLAIMER ? ' and Disclaimer are' : ' are') + ' one tap away, now and any time in Settings \u2192 Legal.</p>'
+    + '<div id="legalReader" style="display:none;max-height:44vh;overflow-y:auto;border:1px solid #d5dbe3;border-radius:10px;padding:10px 14px;margin:10px 0;font-size:14px;"></div>'
+    + '<p style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" id="legalReadTerms" style="min-height:44px;padding:10px 14px;border-radius:10px;border:1px solid #9aa4b2;background:#ffffff;color:#1c2733;font-size:15px;cursor:pointer;">Read the full Terms</button>' + discBtn + '</p>'
+    + '<label style="display:flex;gap:10px;align-items:flex-start;margin:12px 0;cursor:pointer;"><input type="checkbox" id="legalCheck" style="width:22px;height:22px;min-width:22px;margin-top:1px;cursor:pointer;"><span>' + checkLabel + '</span></label>'
+    + '<button type="button" id="legalAgree" disabled style="min-height:52px;width:100%;border:0;border-radius:10px;background:#1f5fa8;color:#ffffff;font-size:17px;font-weight:700;cursor:pointer;opacity:.55;">I Agree</button>'
+    + '<p style="font-size:13px;color:#5a6675;margin-bottom:0;">Your records stay loaded behind this screen and are never deleted or locked, whether or not you agree now.</p>'
+    + '</div>';
+  document.body.appendChild(ov);
+  var reader = ov.querySelector("#legalReader");
+  var showing = "";
+  function toggleReader(kind){
+    if(showing === kind){ reader.style.display = "none"; showing = ""; return; }
+    reader.innerHTML = kind === "terms" ? LEGAL_TERMS_HTML : LEGAL_DISCLAIMER_HTML;
+    reader.style.display = "block"; showing = kind;
+    reader.scrollTop = 0;
+  }
+  ov.querySelector("#legalReadTerms").addEventListener("click", function(){ toggleReader("terms"); });
+  var db = ov.querySelector("#legalReadDisc");
+  if(db) db.addEventListener("click", function(){ toggleReader("disc"); });
+  var legalChk = ov.querySelector("#legalCheck");
+  var legalAgreeBtn = ov.querySelector("#legalAgree");
+  legalChk.addEventListener("change", function(){ legalAgreeBtn.disabled = !legalChk.checked; legalAgreeBtn.style.opacity = legalChk.checked ? "1" : ".55"; });
+  legalAgreeBtn.addEventListener("click", function(){
+    if(!legalChk.checked) return;
+    try{ state.legal = { termsVersion: TERMS_VERSION, acceptedDate: new Date().toISOString(), disclaimerShown: LEGAL_HAS_DISCLAIMER }; save(); }catch(e){}
+    if(ov.parentNode) ov.parentNode.removeChild(ov);
+    legalRefreshSection();
+  });
+}
+function legalInit(){
+  legalFillSection();
+  var rec = legalRecord();
+  if(rec && legalVersionCmp(rec.termsVersion, TERMS_VERSION) >= 0) return;
+  legalShowOverlay(!!rec);
+}
+if(typeof MutationObserver !== "undefined"){
+  var legalObs = new MutationObserver(function(){ legalFillSection(); });
+  legalObs.observe(document.documentElement, { childList: true, subtree: true });
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", function(){ setTimeout(legalInit, 30); });
+else setTimeout(legalInit, 30);
+
+</script>
+</body>
+</html>
